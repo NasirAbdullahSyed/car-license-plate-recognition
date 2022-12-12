@@ -59,6 +59,31 @@ def load_model():
 # Loading our model
 model = load_model()
 
+# Our API Routes
+@app.route('/')
+def home():
+    result_image = request.args.get('result_image') if 'result_image' in request.args else "<img src='/static/default.png' alt='Result' class='block w-[300px] h-[275px] p-6' />"
+    result_text = request.args.get('result_text') if 'result_text' in request.args else "0000-0000"
+    return render_template('home.html', res_img = result_image, res_txt = result_text)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if request.method == 'POST':
+        file = request.files['image']
+        img_bytes = file.read()
+        pil_img = Image.open(io.BytesIO(img_bytes))
+        cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+        plate_img, bounded_img = extractPlate(cv_img)
+        plate_img = Image.fromarray(cv2.cvtColor(plate_img, cv2.COLOR_BGR2RGB))
+        bounded_img = Image.fromarray(cv2.cvtColor(bounded_img, cv2.COLOR_BGR2RGB))
+        plate_img = transform_licensce_img(plate_img)
+        result_text = get_ocr_prediction(classes, model, plate_img)
+        buffered = io.BytesIO()
+        bounded_img.save(buffered, format="JPEG")
+        result_img = base64.b64encode(buffered.getvalue()).decode('ascii')
+        img_tag = f'<img src="data:image/jpeg;base64,{result_img}" alt="Result" class="block w-[300px] h-[275px] p-6" />'
+        return redirect(url_for('home', result_text=result_text, result_image=img_tag))
+
 # Utility Functions
 def drawBoxAroundPlate(image, plate):
     p2fRectPoints = cv2.boxPoints(plate.plateLocation)
