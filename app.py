@@ -1,4 +1,4 @@
-import io, os, torch, cv2, base64
+import io, os, torch, cv2, random, string
 from PIL import Image
 import numpy as np
 import torchvision.transforms as transforms
@@ -11,6 +11,8 @@ from flask import Flask, request, redirect, render_template, url_for
 
 # Init our Flask App
 app = Flask(__name__)
+# Add configs here
+app.config['Temp_Folder'] = wrap_dir(os.path.join('static', 'temp'))
 # Init our class labels
 classes = """;Lv4YT"2iNP)MrJj QUh8+RgmaoDI?$ncxtA-W#V/@K!6,:OXFubl0yqwzk_93pf'd*sEBGH17e5S.C(%"""
 
@@ -80,10 +82,10 @@ def predict():
         bounded_img = Image.fromarray(cv2.cvtColor(bounded_img, cv2.COLOR_BGR2RGB))
         plate_img = transform_licensce_img(plate_img)
         result_text = get_ocr_prediction(classes, model, plate_img)
-        buffered = io.BytesIO()
-        bounded_img.save(buffered, format="JPEG")
-        result_img = base64.b64encode(buffered.getvalue()).decode('ascii')
-        img_tag = f'<img src="data:image/jpeg;base64,{result_img}" alt="Result" class="block w-[300px] h-[275px] p-6" />'
+        random_str = ''.join(random.choices(string.ascii_lowercase, k=5))
+        img_path = os.path.join(app.config['Temp_Folder'], random_str+".jpeg")
+        bounded_img.save(img_path, format="JPEG")
+        img_tag = f'<img src="{img_path}" alt="Result" class="block w-[300px] h-[275px] p-6" />'
         return redirect(url_for('home', result_text=result_text, result_image=img_tag))
 
 # Utility Functions

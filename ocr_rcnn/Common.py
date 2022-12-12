@@ -9,6 +9,7 @@ from textdistance import levenshtein as lev
 def wrap_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+    return path
 
 def split(samples, **kwargs):
     total = len(samples)
