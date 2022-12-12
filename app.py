@@ -34,7 +34,7 @@ def get_ocr_prediction(classes, model, img_tensor):
     result = converter.decode(pos.data, pred_sizes.data, raw=False)
     return result
 
-def load_model():
+def load_model(device):
     params = {
         'imgH': 32,
         'n_classes': len(classes),
@@ -47,7 +47,7 @@ def load_model():
     resume_file = os.path.join(params['save_dir'], 'model_62.ckpt')
     model = CRNN(params)
     model.eval()
-    checkpoint = torch.load(resume_file)
+    checkpoint = torch.load(resume_file, map_location=device)
     state_dict = checkpoint['state_dict']
     new_state_dict = OrderedDict()
     for k, v in state_dict.items():
@@ -56,8 +56,10 @@ def load_model():
     model.load_state_dict(new_state_dict)
     return model
 
+# Select Device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Loading our model
-model = load_model()
+model = load_model(device)
 
 # Our API Routes
 @app.route('/')
